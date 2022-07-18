@@ -32,9 +32,9 @@
 }
 ```
 
-+ `/like?uid=:uid` лайкнуть запись с идентефикатором `uid`
++ `/like?uuid=:uuid` лайкнуть запись с идентефикатором `uuid`
 
-+ `/dislike?uid=:uid` дизлайкнуть запись с идентефикатором `uid`
++ `/dislike?uuid=:uuid` дизлайкнуть запись с идентефикатором `uuid`
 
 #### GET:
 
@@ -46,13 +46,13 @@
 	"total": 2,
 	"data": [
 		{
-			"uid": "1a",
+			"uuid": "1a",
 			"content": "this is post a",
 			"likes": 3,
 			"dislikes": 2
 		},
 		{
-			"uid": "abacaba",
+			"uuid": "abacaba",
 			"content": "abracadabra",
 			"likes": 112,
 			"dislikes": 0
