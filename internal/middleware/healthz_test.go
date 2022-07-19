@@ -13,21 +13,31 @@ import (
 
 func TestGetHealthz(t *testing.T) {
 	gin.SetMode(gin.TestMode)
+
+	// Mock init
 	cfg := models.Config {
 		ServiceVersion: "Test",
 	}
+	ctrl := Controller{
+		&cfg,
+		nil,
+	}
 
-	t.Run("GetHealthz", func(t *testing.T){
-		rr := httptest.NewRecorder()
+	// record request
+	rr := httptest.NewRecorder()
 
-		router := gin.Default()
+	// test router
+	router := gin.Default()
+	router.GET("/healthz", ctrl.GetHealthz)
 
-		request, err := http.NewRequest(http.MethodGet, "/healthz", nil)
-		assert.NoError(t, err)
+	// mock request
+	request, err := http.NewRequest(http.MethodGet, "/healthz", nil)
+	assert.NoError(t, err)
 
-		router.ServeHTTP(rr, request)
+	// make request
+	router.ServeHTTP(rr, request)
 
-		assert.Equal(t, http.StatusOK, rr.Code)
-		assert.Equal(t, "Service is ready.", rr.Body.String())
-	})
+	// expect OK with `Service is ready. Test`
+	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.Equal(t, "Service is ready. " + cfg.ServiceVersion.String(), rr.Body.String())
 }

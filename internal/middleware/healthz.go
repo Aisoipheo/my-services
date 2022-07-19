@@ -7,6 +7,6 @@ import (
 )
 
 func (h *Controller) GetHealthz(c *gin.Context) {
-	c.String(http.StatusOK, "Service is ready. " + h.Config.ServiceVersion)
+	c.String(http.StatusOK, "Service is ready. " + h.Cfg.ServiceVersion.String())
 }
 
