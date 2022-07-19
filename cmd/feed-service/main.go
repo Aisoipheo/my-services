@@ -36,7 +36,7 @@ func main() {
 	ctrl := Controller {
 		&cfg,
 		&postgreSQLConfig,
-		"0.0.1-alpha"
+		"0.0.1-alpha1"
 	}
 
 	router := gin.Default()
