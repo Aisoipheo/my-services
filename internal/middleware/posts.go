@@ -1,4 +1,4 @@
-package posts
+package middleware
 
 import (
 	"strconv"
@@ -7,11 +7,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"my-service/internal/entity"
+	"my-service/internal/models"
 )
 
 type newPostRequestBody struct {
-	Context		string		`json:"content"`
+	Content		string		`json:"content"`
 }
 
 func isValidUUID(u string) bool {
@@ -19,11 +19,11 @@ func isValidUUID(u string) bool {
 	return err == nil
 }
 
-func (h *Controller) getPosts(c *gin.Context) {
+func (h *Controller) GetPosts(c *gin.Context) {
 	queryString := "SELECT uid, context, likes, dislikes FROM posts;"
 
 	if queryLimitString, ok := c.GetQuery("last"); ok {
-		if _, err := ParseUint(queryLimitString, 10, 64); err == nil {
+		if _, err := strconv.ParseUint(queryLimitString, 10, 64); err == nil {
 			queryString += " LIMIT " + queryLimitString
 		} else {
 			c.String(http.StatusBadRequest, "Parameter `last` is invalid.\n`last`=" + queryLimitString)
@@ -41,25 +41,27 @@ func (h *Controller) getPosts(c *gin.Context) {
 	defer rows.Close()
 
 	total := 0
-	response := gin.H {
-		"data": make([]Post, 0, 32)
-	}
+	posts := make([]models.Post, 0, 32)
 	for rows.Next() {
-		post := Post{}
-		err = rows.Scan(&post.UUID, &post.Context, &post.Likes, &post.Dislikes)
+		post := models.Post{}
+		err = rows.Scan(&post.UUID, &post.Content, &post.Likes, &post.Dislikes)
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
 			// TODO log error
 			return
 		}
-		response["data"] = append(response["data"], post)
+		posts = append(posts, post)
 	}
-	response["total"] = total
+	response := gin.H {
+		"data": posts,
+		"total":total,
+	}
+
 	// TODO log success
 	c.JSON(http.StatusOK, response)
 }
 
-func (h *Controller) postLike(c *gin.Context) {
+func (h *Controller) PostLike(c *gin.Context) {
 	queryString := "UPDATE posts SET likes = likes + 1 WHERE uuid = $1;"
 
 	u, ok := c.GetQuery("uuid")
@@ -68,7 +70,7 @@ func (h *Controller) postLike(c *gin.Context) {
 		return
 	}
 
-	if _, err = h.DB.Exec(queryString, u); err != nil {
+	if _, err := h.DB.Exec(queryString, u); err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -76,7 +78,7 @@ func (h *Controller) postLike(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-func (h *Controller) postDislike() {
+func (h *Controller) PostDislike(c *gin.Context) {
 	queryString := "UPDATE posts SET dislikes = dislikes + 1 WHERE uuid = $1;"
 
 	u, ok := c.GetQuery("uuid")
@@ -85,7 +87,7 @@ func (h *Controller) postDislike() {
 		return
 	}
 
-	if _, err = h.DB.Exec(queryString, u); err != nil {
+	if _, err := h.DB.Exec(queryString, u); err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -93,7 +95,7 @@ func (h *Controller) postDislike() {
 	c.Status(http.StatusOK)
 }
 
-func (h *Controller) postNewPost() {
+func (h *Controller) PostNewPost(c *gin.Context) {
 	queryString := "INSERT INTO posts(content) VALUES ($1);"
 
 	var req newPostRequestBody
@@ -103,7 +105,7 @@ func (h *Controller) postNewPost() {
 		return
 	}
 
-	if _, err = h.DB.Exec(queryString, req.content); err != nil {
+	if _, err := h.DB.Exec(queryString, req.Content); err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}

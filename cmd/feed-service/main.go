@@ -3,14 +3,13 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 
-	"my-service/internal/entity"
-	"my-service/internal/posts"
-	"my-service/internal/healthz"
+	"my-service/internal/models"
+	"my-service/internal/middleware"
 	"my-service/pkg/db/postgres"
 )
 
 func main() {
-	var cfg Config
+	var cfg models.Config
 
 	cfg.PostgresUser.GetEnv("POSTGRES_USER")
 	cfg.PostgresPassword.GetEnv("POSTGRES_PASSWORD")
@@ -20,31 +19,31 @@ func main() {
 	cfg.RouterHost.GetEnv("ROUTER_HOST")
 	cfg.RouterPort.GetEnv("ROUTER_PORT")
 
-	postgreSQLConfig := PostgreSQLConfig{
+	postgreSQLConfig := postgres.PostgreSQLConfig{
 		User	: cfg.PostgresUser.String(),
 		Password: cfg.PostgresPassword.String(),
 		DBName	: cfg.PostgresDBName.String(),
 		Host	: cfg.PostgresHost.String(),
-		Port	: cfg.PostgresPort.String()
+		Port	: cfg.PostgresPort.String(),
 	}
 
-	conn, err := NewPostgresDB(postgreSQLConfig);
+	conn, err := postgres.NewPostgresDB(&postgreSQLConfig);
 	if err != nil {
 		panic("PostgreSQL connection failed")
 	}
 
-	ctrl := Controller {
+	ctrl := middleware.Controller {
 		&cfg,
-		&postgreSQLConfig,
-		"0.0.1-alpha1"
+		conn,
+		"0.0.1-alpha",
 	}
 
 	router := gin.Default()
-	router.POST("/likes", ctrl.postLike)
-	router.POST("/dislikes", ctrl.postDislike)
-	router.POST("/new-post", ctrl.postNewPost)
-	router.GET("/posts", ctrl.getPosts)
-	router.GET("/healthz", ctrl.getHealthz)
+	router.POST("/likes", ctrl.PostLike)
+	router.POST("/dislikes", ctrl.PostDislike)
+	router.POST("/new-post", ctrl.PostNewPost)
+	router.GET("/posts", ctrl.GetPosts)
+	router.GET("/healthz", ctrl.GetHealthz)
 
-	router.Run(cfg.RouterHost + ":" + cfg.RouterPort)
+	router.Run(cfg.RouterHost.String() + ":" + cfg.RouterPort.String())
 }

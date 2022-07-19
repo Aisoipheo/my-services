@@ -1,4 +1,4 @@
-package entity
+package models
 
 // Post represents single post in feed
 type Post struct {

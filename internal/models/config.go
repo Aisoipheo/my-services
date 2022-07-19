@@ -1,4 +1,4 @@
-package entity
+package models
 
 import (
 	"os"
@@ -18,7 +18,7 @@ type Config struct {
 
 func (ev *EnvVar) GetEnv(key string) {
 	if val, ok := os.LookupEnv(key); ok {
-		ev = EnvVar(val)
+		*ev = EnvVar(val)
 	} else {
 		panic("Environment variable `" + key + "` is not set. Check spelling or injection")
 	}

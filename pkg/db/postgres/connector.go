@@ -3,10 +3,10 @@ package postgres
 import (
 	"database/sql"
 
-	"github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
-type PostgreSQLConfig {
+type PostgreSQLConfig struct {
 	User		string
 	Password	string
 	DBName		string
@@ -14,7 +14,7 @@ type PostgreSQLConfig {
 	Port		string
 }
 
-func NewPostgresDB(cfg *PostgreSQLConfig) *sql.DB, error {
+func NewPostgresDB(cfg *PostgreSQLConfig) (*sql.DB, error) {
 	connString := "postgresql://" + cfg.User + ":" + cfg.Password +
 		"@" + cfg.Host + ":" + cfg.Port + "/" + cfg.DBName + "?sslmode=disabled"
 
