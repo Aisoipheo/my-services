@@ -18,6 +18,7 @@ func main() {
 	cfg.PostgresPort.GetEnv("POSTGRES_PORT")
 	cfg.RouterHost.GetEnv("ROUTER_HOST")
 	cfg.RouterPort.GetEnv("ROUTER_PORT")
+	cfg.ServiceVersion.GetEnv("SERVICE_VERSION")
 
 	postgreSQLConfig := postgres.PostgreSQLConfig{
 		User	: cfg.PostgresUser.String(),
@@ -35,7 +36,6 @@ func main() {
 	ctrl := middleware.Controller {
 		&cfg,
 		conn,
-		"0.0.1-alpha",
 	}
 
 	router := gin.Default()

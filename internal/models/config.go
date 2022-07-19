@@ -14,6 +14,7 @@ type Config struct {
 	PostgresPort		EnvVar
 	RouterHost			EnvVar
 	RouterPort			EnvVar
+	ServiceVersion		EnvVar
 }
 
 func (ev *EnvVar) GetEnv(key string) {

@@ -10,5 +10,4 @@ import (
 type Controller struct {
 	Cfg		*models.Config
 	DB		*sql.DB
-	Version	string
 }
