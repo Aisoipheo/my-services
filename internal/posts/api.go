@@ -32,7 +32,7 @@ func (h *Controller) getPosts(c *gin.Context) {
 		}
 	}
 
-	rows, err := h.db.Query(queryString)
+	rows, err := h.DB.Query(queryString)
 	if err != nil {
 		// TODO log error
 		c.AbortWithStatus(http.StatusInternalServerError)
@@ -68,7 +68,7 @@ func (h *Controller) postLike(c *gin.Context) {
 		return
 	}
 
-	if _, err = h.db.Exec(queryString, u); err != nil {
+	if _, err = h.DB.Exec(queryString, u); err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -85,7 +85,7 @@ func (h *Controller) postDislike() {
 		return
 	}
 
-	if _, err = h.db.Exec(queryString, u); err != nil {
+	if _, err = h.DB.Exec(queryString, u); err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -103,7 +103,7 @@ func (h *Controller) postNewPost() {
 		return
 	}
 
-	if _, err = h.db.Exec(queryString, req.content); err != nil {
+	if _, err = h.DB.Exec(queryString, req.content); err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}

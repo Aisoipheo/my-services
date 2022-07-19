@@ -45,5 +45,6 @@ func main() {
 	router.POST("/new-post", ctrl.postNewPost)
 	router.GET("/posts", ctrl.getPosts)
 	router.GET("/healthz", ctrl.getHealthz)
+
 	router.Run(cfg.RouterHost + ":" + cfg.RouterPort)
 }

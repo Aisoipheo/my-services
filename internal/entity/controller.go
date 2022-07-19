@@ -6,7 +6,7 @@ import (
 
 // Base class for any API
 type Controller struct {
-	cfg		*Config
-	db		*sql.DB
-	version	string
+	Cfg		*Config
+	DB		*sql.DB
+	Version	string
 }
