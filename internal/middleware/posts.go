@@ -47,7 +47,6 @@ func (h *Controller) GetPosts(c *gin.Context) {
 		err = rows.Scan(&post.UUID, &post.Content, &post.Likes, &post.Dislikes)
 		if err != nil {
 			c.AbortWithStatus(http.StatusInternalServerError)
-			// TODO log error
 			return
 		}
 		posts = append(posts, post)
@@ -57,7 +56,6 @@ func (h *Controller) GetPosts(c *gin.Context) {
 		"total":total,
 	}
 
-	// TODO log success
 	c.JSON(http.StatusOK, response)
 }
 

@@ -42,7 +42,7 @@ clean:
 	go mod tidy
 
 clear: clean
-	rm -vf "${NAME}"
+	rm -vf ./bin/$(NAME)
 
 $(NAME): build
 
