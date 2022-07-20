@@ -24,11 +24,22 @@ test dbName	: test
 
 	db, err := NewPostgresDB(&postgresCfg)
 	if err != nil {
-		t.Fatalf(errStr, err)
+		t.Fatal(errStr, err)
 	}
 	defer db.Close()
+}
 
-	if err := db.Ping(); err != nil {
-		t.Fatalf(errStr, err)
+func TestNewPostgresDBFail(t *testing.T) {
+	postgresCfg := PostgreSQLConfig {
+		User	: "asd",
+		Password: "wwwww",
+		DBName	: "abracadabra",
+		Host	: "1.1.1.1",
+		Port	: "11111",
+	}
+
+	_, err := NewPostgresDB(&postgresCfg)
+	if err == nil {
+		t.Fatal("This is an impossible test. How did this happen?")
 	}
 }

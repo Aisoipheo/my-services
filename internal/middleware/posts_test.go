@@ -8,5 +8,3 @@ import (
 
 	"my-service/internal/models"
 )
-
-func Test
