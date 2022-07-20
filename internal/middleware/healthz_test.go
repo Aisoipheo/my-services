@@ -19,8 +19,8 @@ func TestGetHealthz(t *testing.T) {
 		ServiceVersion: "Test",
 	}
 	ctrl := Controller{
-		&cfg,
-		nil,
+		Cfg: &cfg,
+		DB: nil,
 	}
 
 	// record request

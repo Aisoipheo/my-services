@@ -2,7 +2,7 @@ CWD_ABS				= $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 NAME				= my-service
 
-.phony: lint init build test
+.phony: lint init build test coverage
 .DEFAULT_GOAL = $(NAME)
 
 init:
@@ -10,25 +10,28 @@ init:
 		go mod init $(NAME);\
 		go mod tidy;\
 	fi
-	go get $(CWD_ABS)...
+	go get ./...
 
 build:
-	go build $(CWD_ABS)...
+	go build ./...
 
 test:
-	go test -v --cover $(CWD_ABS)...
+	go test -v --cover ./...
+
+coverage:
+	go test -coverprofile=coverage.out ./...
+	go tool cover -html=coverage.out
 
 lint:
-	echo 'Mock for linters...'
+	./bin/golangci-lint run ./...
 
 clean:
+	rm -vf coverage.out
 	go clean --testcache
 	go mod tidy
 
 clear: clean
-	if [ -f "${CWD_ABS}${NAME}" ]; then\
-		rm -v "${CWD_ABS}${NAME}";\
-	fi
+	rm -vf "${NAME}"
 
 $(NAME): build
 

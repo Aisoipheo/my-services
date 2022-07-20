@@ -30,12 +30,12 @@ func main() {
 
 	conn, err := postgres.NewPostgresDB(&postgreSQLConfig);
 	if err != nil {
-		panic("PostgreSQL connection failed")
+		panic(err)
 	}
 
 	ctrl := middleware.Controller {
-		&cfg,
-		conn,
+		Cfg: &cfg,
+		DB: conn,
 	}
 
 	router := gin.Default()
@@ -45,5 +45,8 @@ func main() {
 	router.GET("/posts", ctrl.GetPosts)
 	router.GET("/healthz", ctrl.GetHealthz)
 
-	router.Run(cfg.RouterHost.String() + ":" + cfg.RouterPort.String())
+	addrStr := cfg.RouterHost.String() + ":" + cfg.RouterPort.String()
+	if err:= router.Run(addrStr); err != nil {
+		panic(err)
+	}
 }
