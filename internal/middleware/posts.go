@@ -19,6 +19,36 @@ func isValidUUID(u string) bool {
 	return err == nil
 }
 
+func singleTransaction(h *Controller, c *gin.Context, queryString string, params ...interface{}) {
+	tx, err := h.DB.Begin()
+	if err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	stmt, err := tx.Prepare(queryString)
+	if err != nil {
+		tx.Rollback()
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+	defer stmt.Close()
+	_, err = stmt.Exec(params...)
+	if err != nil {
+		tx.Rollback()
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	if err := tx.Commit(); err != nil {
+		tx.Rollback()
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	c.Status(http.StatusOK)
+}
+
 func (h *Controller) GetPosts(c *gin.Context) {
 	queryString := "SELECT uid, context, likes, dislikes FROM posts;"
 
@@ -27,14 +57,12 @@ func (h *Controller) GetPosts(c *gin.Context) {
 			queryString += " LIMIT " + queryLimitString
 		} else {
 			c.String(http.StatusBadRequest, "Parameter `last` is invalid.\n`last`=" + queryLimitString)
-			// TODO log error
 			return
 		}
 	}
 
 	rows, err := h.DB.Query(queryString)
 	if err != nil {
-		// TODO log error
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -68,12 +96,7 @@ func (h *Controller) PostLike(c *gin.Context) {
 		return
 	}
 
-	if _, err := h.DB.Exec(queryString, u); err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
-
-	c.Status(http.StatusOK)
+	singleTransaction(h, c, queryString, u)
 }
 
 func (h *Controller) PostDislike(c *gin.Context) {
@@ -85,12 +108,7 @@ func (h *Controller) PostDislike(c *gin.Context) {
 		return
 	}
 
-	if _, err := h.DB.Exec(queryString, u); err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
-
-	c.Status(http.StatusOK)
+	singleTransaction(h, c, queryString, u)
 }
 
 func (h *Controller) PostNewPost(c *gin.Context) {
@@ -103,10 +121,5 @@ func (h *Controller) PostNewPost(c *gin.Context) {
 		return
 	}
 
-	if _, err := h.DB.Exec(queryString, req.Content); err != nil {
-		c.AbortWithStatus(http.StatusInternalServerError)
-		return
-	}
-
-	c.Status(http.StatusOK)
+	singleTransaction(h, c, queryString, req.Content)
 }

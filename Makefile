@@ -26,11 +26,11 @@ build: bin_dir
 	go build -o ./bin/$(NAME) ./cmd/$(NAME)
 
 test:
-	go test -v --cover ./...
+	go test -cpu=4 -v --cover ./...
 
 coverage:
 	# ignore errors, generate html for valid coverage
-	-go test -coverprofile=coverage.out ./...
+	-go test -cpu=4 -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out
 
 lint: bin_dir golangci_lint_install
