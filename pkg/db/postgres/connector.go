@@ -14,6 +14,7 @@ type PostgreSQLConfig struct {
 	Port		string
 }
 
+// connect to Postgres with creds from config, sslmode=disabled
 func NewPostgresDB(cfg *PostgreSQLConfig) (*sql.DB, error) {
 	connString := "postgresql://" + cfg.User + ":" + cfg.Password +
 		"@" + cfg.Host + ":" + cfg.Port + "/" + cfg.DBName + "?sslmode=disabled"

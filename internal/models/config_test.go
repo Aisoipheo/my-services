@@ -13,6 +13,9 @@ func TestGetEnv(t *testing.T) {
 
 	// prepare playground
 	os.Setenv(key, val)
+	// expected not to appear in env
+	key2 := "BUZZ"
+	os.Unsetenv(key2)
 
 	t.Run("FOO BAR", func (t *testing.T) {
 		t.Parallel()
@@ -25,9 +28,6 @@ func TestGetEnv(t *testing.T) {
 	t.Run("panic", func (t *testing.T) {
 		t.Parallel()
 
-		// expected not to appear in env
-		key2 := "BUZZ"
-		os.Unsetenv(key2)
 		assert.Panics(t, func() { e.GetEnv(key2) }, "`BUZZ` is not supposed to be set")
 	})
 }
