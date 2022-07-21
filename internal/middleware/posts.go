@@ -54,7 +54,7 @@ func singleTransaction(h *Controller, c *gin.Context, queryString string, params
 }
 
 func (h *Controller) GetPosts(c *gin.Context) {
-	queryString := "SELECT uid, content, likes, dislikes FROM posts"
+	queryString := "SELECT uuid, content, likes, dislikes FROM posts"
 
 	if queryLimitString, ok := c.GetQuery("last"); ok {
 		if _, err := strconv.ParseUint(queryLimitString, 10, 64); err == nil {
@@ -70,15 +70,14 @@ func (h *Controller) GetPosts(c *gin.Context) {
 	// should return empty response with 200 StatusOK
 	// REASON: could be SELECT on empty table
 	case err == sql.ErrNoRows:
-		c.JSON(http.StatusOK, gin.H { "total": 0, "data": "[]" })
+		c.JSON(http.StatusOK, gin.H { "total": 0, "data": []models.Post{} })
 		return
-	default:
+	case err != nil:
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
-	total := 0
 	posts := make([]models.Post, 0, 32)
 	for rows.Next() {
 		post := models.Post{}
@@ -89,9 +88,10 @@ func (h *Controller) GetPosts(c *gin.Context) {
 		}
 		posts = append(posts, post)
 	}
+
 	response := gin.H {
 		"data": posts,
-		"total":total,
+		"total":len(posts),
 	}
 
 	c.JSON(http.StatusOK, response)
