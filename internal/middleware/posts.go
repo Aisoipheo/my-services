@@ -3,6 +3,7 @@ package middleware
 import (
 	"strconv"
 	"net/http"
+	"database/sql"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -28,20 +29,23 @@ func singleTransaction(h *Controller, c *gin.Context, queryString string, params
 
 	stmt, err := tx.Prepare(queryString)
 	if err != nil {
-		tx.Rollback()
+		// `_ =` to silence lint, no way to react to this
+		_ = tx.Rollback()
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 	defer stmt.Close()
 	_, err = stmt.Exec(params...)
 	if err != nil {
-		tx.Rollback()
+		// `_ =` to silence lint, no way to react to this
+		_ = tx.Rollback()
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
 	if err := tx.Commit(); err != nil {
-		tx.Rollback()
+		// `_ =` to silence lint, no way to react to this
+		_ = tx.Rollback()
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -50,7 +54,7 @@ func singleTransaction(h *Controller, c *gin.Context, queryString string, params
 }
 
 func (h *Controller) GetPosts(c *gin.Context) {
-	queryString := "SELECT uid, context, likes, dislikes FROM posts;"
+	queryString := "SELECT uid, content, likes, dislikes FROM posts"
 
 	if queryLimitString, ok := c.GetQuery("last"); ok {
 		if _, err := strconv.ParseUint(queryLimitString, 10, 64); err == nil {
@@ -62,7 +66,13 @@ func (h *Controller) GetPosts(c *gin.Context) {
 	}
 
 	rows, err := h.DB.Query(queryString)
-	if err != nil {
+	switch {
+	// should return empty response with 200 StatusOK
+	// REASON: could be SELECT on empty table
+	case err == sql.ErrNoRows:
+		c.JSON(http.StatusOK, gin.H { "total": 0, "data": "[]" })
+		return
+	default:
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -117,7 +127,8 @@ func (h *Controller) PostNewPost(c *gin.Context) {
 	var req newPostRequestBody
 
 	if err := c.BindJSON(&req); err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
+		// `_ =` to silence lint, no way to react to this
+		_ = c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
