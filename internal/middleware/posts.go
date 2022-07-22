@@ -35,6 +35,7 @@ func singleTransaction(h *Controller, c *gin.Context, queryString string, params
 		return
 	}
 	defer stmt.Close()
+
 	_, err = stmt.Exec(params...)
 	if err != nil {
 		// `_ =` to silence lint, no way to react to this

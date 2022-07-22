@@ -39,8 +39,8 @@ func main() {
 	}
 
 	router := gin.Default()
-	router.POST("/likes", ctrl.PostLike)
-	router.POST("/dislikes", ctrl.PostDislike)
+	router.POST("/like", ctrl.PostLike)
+	router.POST("/dislike", ctrl.PostDislike)
 	router.POST("/new-post", ctrl.PostNewPost)
 	router.GET("/posts", ctrl.GetPosts)
 	router.GET("/healthz", ctrl.GetHealthz)

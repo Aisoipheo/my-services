@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"errors"
+	"regexp"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -88,6 +90,7 @@ func TestGetPostsNoDB(t *testing.T) {
 	connString := "postgres://postgres:postgres@123.123.123.123:123/data?connect_timeout=1"
 	db, err := sql.Open("postgres", connString)
 	assert.NoError(t, err)
+	defer db.Close()
 
 	ctrl := Controller {
 		DB: db,
@@ -553,4 +556,309 @@ func TestGetPostsNegativeParam(t *testing.T) {
 
 	assert.Equal(t, http.StatusBadRequest, rr.Code)
 	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestSingleTransactionNoDB(t *testing.T) {
+	// Mock init
+	connString := "postgres://postgres:postgres@123.123.123.123:123/data?connect_timeout=1"
+	db, err := sql.Open("postgres", connString)
+	assert.NoError(t, err)
+	defer db.Close()
+
+	ctrl := Controller{
+		DB: db,
+	}
+
+	// register request
+	rr := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rr)
+	assert.NoError(t, err)
+
+	stmt := "SELECT 1;"
+
+	// actual function call
+	singleTransaction(&ctrl, c, stmt)
+
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+}
+
+func TestSingleTransactionBadStmt(t *testing.T) {
+	// Mock init
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+	ctrl := Controller{
+		DB: db,
+	}
+
+	// register request
+	rr := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rr)
+	assert.NoError(t, err)
+
+	stmt := "SELECT =;"
+
+	mock.ExpectBegin()
+	mock.
+		ExpectPrepare(stmt).
+		WillReturnError(errors.New(""))
+	mock.ExpectRollback()
+
+	// actual function call
+	singleTransaction(&ctrl, c, stmt)
+
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestSingleTransactionBadArgs(t *testing.T) {
+	// Mock init
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+	ctrl := Controller{
+		DB: db,
+	}
+
+	// register request
+	rr := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rr)
+	assert.NoError(t, err)
+
+	stmt := "SELECT * FROM t WHERE id = $1;"
+
+	mock.ExpectBegin()
+	mock.
+		ExpectPrepare(regexp.QuoteMeta(stmt)).
+		ExpectExec().
+		WillReturnError(errors.New(""))
+	mock.ExpectRollback()
+
+	// actual function call
+	singleTransaction(&ctrl, c, stmt)
+
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestSingleTransactionOKCommit(t *testing.T) {
+	// Mock init
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+	ctrl := Controller{
+		DB: db,
+	}
+
+	// register request
+	rr := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rr)
+	assert.NoError(t, err)
+
+	stmt := "SELECT * FROM t WHERE id = $1;"
+
+	mock.ExpectBegin()
+	mock.
+		ExpectPrepare(regexp.QuoteMeta(stmt)).
+		ExpectExec().
+		WillReturnResult(sqlmock.NewResult(1, 1)) // firt result, 1 row affected
+	mock.ExpectCommit()
+
+	// actual function call
+	singleTransaction(&ctrl, c, stmt, "123")
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestPostLikeOK(t *testing.T) {
+	// Mock init
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+	ctrl := Controller{
+		DB: db,
+	}
+
+	// register request
+	rr := httptest.NewRecorder()
+
+	// set up test router
+	router := gin.Default()
+	router.GET("/like", ctrl.PostLike)
+
+	stmt := "UPDATE posts SET likes = likes + 1 WHERE uuid = $1;"
+
+	mock.ExpectBegin()
+	mock.
+		ExpectPrepare(regexp.QuoteMeta(stmt)).
+		ExpectExec().
+		WillReturnResult(sqlmock.NewResult(1, 1)) // firt result, 1 row affected
+	mock.ExpectCommit()
+
+	// mock request
+	request, err := http.NewRequest(http.MethodGet, "/like?uuid=78204138-90c6-49f7-90d9-1461d5d640f8", nil)
+	assert.NoError(t, err)
+
+	// make request
+	router.ServeHTTP(rr, request)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestPostLikeNoUUID(t *testing.T) {
+	// Mock init
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+	ctrl := Controller{
+		DB: db,
+	}
+
+	// register request
+	rr := httptest.NewRecorder()
+
+	// set up test router
+	router := gin.Default()
+	router.GET("/like", ctrl.PostLike)
+
+	_ = "UPDATE posts SET likes = likes + 1 WHERE uuid = $1;"
+
+	// mock request
+	request, err := http.NewRequest(http.MethodGet, "/like", nil)
+	assert.NoError(t, err)
+
+	// make request
+	router.ServeHTTP(rr, request)
+
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestPostLikeBadUUID(t *testing.T) {
+	// Mock init
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+	ctrl := Controller{
+		DB: db,
+	}
+
+	// register request
+	rr := httptest.NewRecorder()
+
+	// set up test router
+	router := gin.Default()
+	router.GET("/like", ctrl.PostLike)
+
+	_ = "UPDATE posts SET likes = likes + 1 WHERE uuid = $1;"
+
+	// mock request
+	request, err := http.NewRequest(http.MethodGet, "/like?uuid=78204138-90c6-49f7-90d9", nil)
+	assert.NoError(t, err)
+
+	// make request
+	router.ServeHTTP(rr, request)
+
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestPostDislikeOK(t *testing.T) {
+	// Mock init
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+	ctrl := Controller{
+		DB: db,
+	}
+
+	// register request
+	rr := httptest.NewRecorder()
+
+	// set up test router
+	router := gin.Default()
+	router.GET("/dislike", ctrl.PostDislike)
+
+	stmt := "UPDATE posts SET dislikes = dislikes + 1 WHERE uuid = $1;"
+
+	mock.ExpectBegin()
+	mock.
+		ExpectPrepare(regexp.QuoteMeta(stmt)).
+		ExpectExec().
+		WillReturnResult(sqlmock.NewResult(1, 1)) // firt result, 1 row affected
+	mock.ExpectCommit()
+
+	// mock request
+	request, err := http.NewRequest(http.MethodGet, "/dislike?uuid=78204138-90c6-49f7-90d9-1461d5d640f8", nil)
+	assert.NoError(t, err)
+
+	// make request
+	router.ServeHTTP(rr, request)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestPostDisikeNoUUID(t *testing.T) {
+	// Mock init
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+	ctrl := Controller{
+		DB: db,
+	}
+
+	// register request
+	rr := httptest.NewRecorder()
+
+	// set up test router
+	router := gin.Default()
+	router.GET("/dislike", ctrl.PostDislike)
+
+	_ = "UPDATE disposts SET likes = dislikes + 1 WHERE uuid = $1;"
+
+	// mock request
+	request, err := http.NewRequest(http.MethodGet, "/dislike", nil)
+	assert.NoError(t, err)
+
+	// make request
+	router.ServeHTTP(rr, request)
+
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestPostDislikeBadUUID(t *testing.T) {
+	// Mock init
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+	ctrl := Controller{
+		DB: db,
+	}
+
+	// register request
+	rr := httptest.NewRecorder()
+
+	// set up test router
+	router := gin.Default()
+	router.GET("/dislike", ctrl.PostDislike)
+
+	_ = "UPDATE posts SET dislikes = dislikes + 1 WHERE uuid = $1;"
+
+	// mock request
+	request, err := http.NewRequest(http.MethodGet, "/dislike?uuid=78204138-90c6-49f7-90d9", nil)
+	assert.NoError(t, err)
+
+	// make request
+	router.ServeHTTP(rr, request)
+
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestPostNewPostOK(t *testing.T) {
+
 }
