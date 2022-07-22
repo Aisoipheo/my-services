@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"io"
+	"bytes"
 	"errors"
 	"regexp"
 	"net/http"
@@ -17,8 +19,20 @@ import (
 	"my-service/internal/models"
 )
 
+type posts struct {
+	Total	int				`json:"total"`
+	Data	[]models.Post	`json:"data"`
+}
+
+type badPost struct {
+	WrongContent string `json:"wrongcontent"`
+}
+
+type emptyPost struct {} // yes should be empty
+
 func TestInit(t *testing.T) {
 	gin.SetMode(gin.TestMode)
+	gin.EnableJsonDecoderDisallowUnknownFields()
 }
 
 // google has underlying function covered
@@ -37,11 +51,6 @@ func TestIsValidUUID(t *testing.T) {
 		uuid := "asd"
 		assert.Equal(t, false, isValidUUID(uuid))
 	})
-}
-
-type posts struct {
-	Total	int				`json:"total"`
-	Data	[]models.Post	`json:"data"`
 }
 
 // SELECT on empty table (sql.ErrNoRows)
@@ -860,5 +869,123 @@ func TestPostDislikeBadUUID(t *testing.T) {
 }
 
 func TestPostNewPostOK(t *testing.T) {
+	// Mock init
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+	ctrl := Controller{
+		DB: db,
+	}
 
+	// register request
+	rr := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rr)
+
+	np := newPostRequestBody {
+		Content: "New message",
+	}
+
+	c.Request = &http.Request {
+		Header: make(http.Header),
+	}
+	assert.Equal(t, true, c.Request != nil) //non-zero return
+
+	c.Request.Method = http.MethodPost
+	c.Request.Header.Set("Content-Type", "application/json")
+
+	jbytes, err := json.Marshal(np)
+	assert.NoError(t, err)
+
+	c.Request.Body = io.NopCloser(bytes.NewBuffer(jbytes))
+
+	stmt := "INSERT INTO posts(content) VALUES ($1);"
+
+	mock.ExpectBegin()
+	mock.
+		ExpectPrepare(regexp.QuoteMeta(stmt)).
+		ExpectExec().
+		WillReturnResult(sqlmock.NewResult(1, 1)) // firt result, 1 row affected
+	mock.ExpectCommit()
+
+	// actual function call
+	ctrl.PostNewPost(c)
+
+	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestPostNewPostBadJson(t *testing.T) {
+	// Mock init
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+	ctrl := Controller{
+		DB: db,
+	}
+
+	// register request
+	rr := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rr)
+
+	np := badPost {
+		WrongContent: "New message",
+	}
+
+	c.Request = &http.Request {
+		Header: make(http.Header),
+	}
+	assert.Equal(t, true, c.Request != nil) //non-zero return
+
+	c.Request.Method = http.MethodPost
+	c.Request.Header.Set("Content-Type", "application/json")
+
+	jbytes, err := json.Marshal(np)
+	assert.NoError(t, err)
+
+	c.Request.Body = io.NopCloser(bytes.NewBuffer(jbytes))
+
+	_ = "INSERT INTO posts(content) VALUES ($1);"
+
+	// actual function call
+	ctrl.PostNewPost(c)
+
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestPostNewPostEmptyJson(t *testing.T) {
+	// Mock init
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+	ctrl := Controller{
+		DB: db,
+	}
+
+	// register request
+	rr := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rr)
+
+	np := emptyPost {}
+
+	c.Request = &http.Request {
+		Header: make(http.Header),
+	}
+	assert.Equal(t, true, c.Request != nil) //non-zero return
+
+	c.Request.Method = http.MethodPost
+	c.Request.Header.Set("Content-Type", "application/json")
+
+	jbytes, err := json.Marshal(np)
+	assert.NoError(t, err)
+
+	c.Request.Body = io.NopCloser(bytes.NewBuffer(jbytes))
+
+	_ = "INSERT INTO posts(content) VALUES ($1);"
+
+	// actual function call
+	ctrl.PostNewPost(c)
+
+	assert.Equal(t, http.StatusBadRequest, rr.Code)
+	assert.NoError(t, mock.ExpectationsWereMet())
 }

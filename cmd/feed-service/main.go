@@ -38,6 +38,7 @@ func main() {
 		DB: conn,
 	}
 
+	gin.EnableJsonDecoderDisallowUnknownFields()
 	router := gin.Default()
 	router.POST("/like", ctrl.PostLike)
 	router.POST("/dislike", ctrl.PostDislike)

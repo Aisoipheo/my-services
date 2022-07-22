@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"errors"
+	"strings"
 	"strconv"
 	"net/http"
 	"database/sql"
@@ -127,11 +129,18 @@ func (h *Controller) PostNewPost(c *gin.Context) {
 
 	var req newPostRequestBody
 
-	if err := c.BindJSON(&req); err != nil {
+	err := c.BindJSON(&req);
+	if  err != nil{
 		// `_ =` to silence lint, no way to react to this
 		_ = c.AbortWithError(http.StatusBadRequest, err)
 		return
 	}
 
-	singleTransaction(h, c, queryString, req.Content)
+	trimmed := strings.TrimSpace(req.Content)
+	if trimmed == "" {
+		// `_ =` to silence lint, no way to react to this
+		_ = c.AbortWithError(http.StatusBadRequest, errors.New("empty content"))
+		return
+	}
+	singleTransaction(h, c, queryString, trimmed)
 }
