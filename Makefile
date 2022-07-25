@@ -22,7 +22,7 @@ init:
 	fi
 	go get ./...
 
-build: bin_dir
+build: init bin_dir
 	go build -o ./bin/$(NAME) ./cmd/$(NAME)
 
 test:
@@ -46,3 +46,4 @@ clear: clean
 
 $(NAME): build
 
+cluster:
