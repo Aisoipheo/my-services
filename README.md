@@ -8,7 +8,7 @@
 * <img src="https://github.com/devicons/devicon/raw/master/icons/jenkins/jenkins-original.svg" width="15" height="15"> Jenkins
 * <img src="https://github.com/devicons/devicon/raw/master/icons/docker/docker-original.svg" width="15" height="15"> Docker
 * <img src="https://helm.sh/img/helm.svg" width="15" height="15"> Helm <img src="https://github.com/devicons/devicon/raw/master/icons/kubernetes/kubernetes-plain.svg" width="15" height="15"> Kubernetes <img src="https://raw.githubusercontent.com/kubernetes/minikube/master/images/logo/logo.png" width="15" height="15"> Minikube
-* <img src="https://github.com/devicons/devicon/raw/master/icons/prometheus/prometheus-original.svg" width="15" height="15"> Prometheus <img src="https://github.com/devicons/devicon/raw/master/icons/grafana/grafana-original.svg" width="15" height="15"> Grafana
+<!--* <img src="https://github.com/devicons/devicon/raw/master/icons/prometheus/prometheus-original.svg" width="15" height="15"> Prometheus <img src="https://github.com/devicons/devicon/raw/master/icons/grafana/grafana-original.svg" width="15" height="15"> Grafana -->
 <!-- * <img src="https://static-www.elastic.co/v3/assets/bltefdd0b53724fa2ce/blt36f2da8d650732a0/5d0823c3d8ff351753cbc99f/logo-elasticsearch-32-color.svg" width="15" height="15"> Elasticksearch <img src="https://static-www.elastic.co/v3/assets/bltefdd0b53724fa2ce/blt8b679e63f2b49b27/5d082d93877575d0584761c0/logo-logstash-32-color.svg" width="15" height="15"> Logstash <img src="https://static-www.elastic.co/v3/assets/bltefdd0b53724fa2ce/blt4466841eed0bf232/5d082a5e97f2babb5af907ee/logo-kibana-32-color.svg" width="15" height="15"> Kibana -->
 
 # Задача
@@ -73,9 +73,11 @@
 
 Сервис должен развертываться в <img src="https://github.com/devicons/devicon/raw/master/icons/kubernetes/kubernetes-plain.svg" width="15" height="15"> Kubernetes кластере
 
+<!--
 ## 📊 Мониторинг
 
 В кластере должен быть настроен мониторинг сервиса и хранилища данных с помощью <img src="https://github.com/devicons/devicon/raw/master/icons/prometheus/prometheus-original.svg" width="15" height="15"> Prometheus, визуализация <img src="https://github.com/devicons/devicon/raw/master/icons/grafana/grafana-original.svg" width="15" height="15"> Grafana
 * Health-checks
 * Количество запросов в минуту
 * Использование ресурсов кластера
+-->
