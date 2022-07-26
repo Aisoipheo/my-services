@@ -2,17 +2,12 @@ CWD_ABS				= $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 NAME				= feed-service
 
-.phony: lint init build test coverage bin_dir golangci_lint_install
+.phony: lint init build test coverage bin_dir
 .DEFAULT_GOAL = $(NAME)
 
 bin_dir:
 	if [ ! -d "./bin" ]; then\
 		mkdir "bin";\
-	fi
-
-golangci_lint_install:
-	if [ ! -f "./bin/golangci-lint" ]; then\
-		wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.47.1;\
 	fi
 
 init:
@@ -33,8 +28,10 @@ coverage:
 	-go test -cpu=4 -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out
 
-lint: bin_dir golangci_lint_install
-	./bin/golangci-lint run ./...
+lint:
+	golangci-lint run ./...
+	yamllint ./...
+	hadolint ./...
 
 clean:
 	rm -vf coverage.out
@@ -46,4 +43,3 @@ clear: clean
 
 $(NAME): build
 
-cluster:
