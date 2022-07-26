@@ -1,5 +1,5 @@
 pipeline {
-	agent { label 'kubepod' }
+	agent { kubernetes { label 'kubepod' } }
 	stages {
 		stage('Simple Hello World') {
 			steps {
