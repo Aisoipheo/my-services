@@ -1,1 +1,10 @@
-JENKINSFILE
+pipeline {
+	agent { kubepod }
+	stages {
+		stage('Simple Hello World') {
+			steps {
+				sh 'go version && yamllint --version && hadolint --version && golangci-lint --version'
+			}
+		}
+	}
+}
