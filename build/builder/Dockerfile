@@ -1,4 +1,5 @@
-FROM jenkins/jnlp-slave:4.13.2-1-alpine AS base
+# FROM jenkins/inbound-agent:4.11-1-alpine-jdk11 AS base
+FROM golang:1.18.4-alpine3.15 AS BASE
 
 USER root
 
@@ -6,20 +7,20 @@ ENV WORKSPACE /home/jenkins
 
 # =============== INSTALL GO ===============
 
-FROM base AS install-go
+# FROM base AS install-go
 
-ENV GOLANG_VERSION=1.18.4 \
-	GOLANG_DOWNLOAD_SHA256=c9b099b68d93f5c5c8a8844a89f8db07eaa58270e3a1e01804f17f4cf8df02f5
+# ENV GOLANG_VERSION=1.18.4 \
+# 	GOLANG_DOWNLOAD_SHA256=c9b099b68d93f5c5c8a8844a89f8db07eaa58270e3a1e01804f17f4cf8df02f5
 
-ENV GOLANG_DOWNLOAD_URL=https://go.dev/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
+# ENV GOLANG_DOWNLOAD_URL=https://go.dev/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
 
-# Install Go
-RUN wget -q "$GOLANG_DOWNLOAD_URL" -O golang.tar.gz \
-	&& echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - \
-	&& tar -C /usr/local -xzf golang.tar.gz \
-	&& rm golang.tar.gz
+# # Install Go
+# RUN wget -q "$GOLANG_DOWNLOAD_URL" -O golang.tar.gz \
+# 	&& echo "$GOLANG_DOWNLOAD_SHA256  golang.tar.gz" | sha256sum -c - \
+# 	&& tar -C /usr/local -xzf golang.tar.gz \
+# 	&& rm golang.tar.gz
 
-# =============== INSTALL GOLANGCI-LINT ===============
+# =============== INhow to connect to postgres pod from another podSTALL GOLANGCI-LINT ===============
 
 FROM base AS install-golangci-lint
 
@@ -30,7 +31,7 @@ RUN wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master
 
 FROM base AS install-python
 
-ENV PYTHON3_VERSION=3.9.5-r2 \
+ENV PYTHON3_VERSION=3.9.13-r1 \
 	PYTHON3_PIP_VERSION=20.3.4-r1
 
 # Install Python3 and pip
@@ -61,7 +62,7 @@ ENV GHC_VERSION=8.10.7 \
 ENV GHCUP_DOWNLOAD_URL=https://downloads.haskell.org/~ghcup/$GHCUP_VERSION/x86_64-linux-ghcup-$GHCUP_VERSION \
 	STACK_DIRNAME=stack-$STACK_VERSION-linux-x86_64 \
 	STACK_DOWNLOAD_URL=https://github.com/commercialhaskell/stack/releases/download/v$STACK_VERSION/stack-$STACK_VERSION-linux-x86_64.tar.gz
-
+how to connect to postgres pod from another pod
 ENV GHCUP_INSTALL_BASE_PREFIX=/
 ENV PATH=/.ghcup/bin:$PATH
 
@@ -75,7 +76,8 @@ RUN apk update \
 	make \
 	git \
 	zlib \
-	libffi
+	libffi \
+	ghc
 
 # Install ghcup
 RUN wget -q "$GHCUP_DOWNLOAD_URL" -O /usr/local/bin/ghcup \
@@ -113,20 +115,30 @@ RUN mv /root/.local/bin/hadolint /usr/local/bin/hadolint
 # otherwise doesnt work
 FROM install-yamllint
 
-COPY --from=install-go /usr/local/go /usr/local/go
+# COPY --from=install-go /usr/local/go /usr/local/go
 COPY --from=install-golangci-lint /usr/local/bin/golangci-lint /usr/local/bin/golangci-lint
 COPY --from=install-hadolint /usr/local/bin/hadolint /usr/local/bin/hadolint
 # COPY --from=install-yamllint /usr/bin/yamllint /usr/bin/yamllint
 
 # Set up env
-ENV GOPATH=$WORKSPACE/go\
-	GOROOT=/usr/local/go
-ENV PATH=$GOROOT/bin:$GOPATH/bin/:$PATH
+# ENV GOPATH=$WORKSPACE/go\
+# 	GOROOT=/usr/local/go
+# ENV PATH=$GOROOT/bin:$GOPATH/bin/:$PATH
 
-RUN mkdir -p $GOPATH \
-	&& chown -R jenkins:jenkins $GOPATH
+# # libc for Go
+# RUN apk update \
+# 	&& apk add --no-cache \
+# 	gcompat==1.0.0-r2
+
+# RUN mkdir -p $GOPATH \
+# 	&& chown -R jenkins:jenkins $GOPATH
 
 WORKDIR $WORKSPACE
 
 # su jenkins
 USER jenkins
+
+RUN go version \
+	&& yamllint --version \
+	&& hadolint --version \
+	&& golangci-lint --version

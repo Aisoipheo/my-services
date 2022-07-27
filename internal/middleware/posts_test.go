@@ -16,7 +16,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	_ "github.com/lib/pq"
 
-	"my-service/internal/models"
+	"feed-service/internal/models"
 )
 
 type posts struct {

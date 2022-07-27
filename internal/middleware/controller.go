@@ -3,7 +3,7 @@ package middleware
 import (
 	"database/sql"
 
-	"my-service/internal/models"
+	"feed-service/internal/models"
 )
 
 // Base class for any API

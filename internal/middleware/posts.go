@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"my-service/internal/models"
+	"feed-service/internal/models"
 )
 
 type newPostRequestBody struct {

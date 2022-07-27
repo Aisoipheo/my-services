@@ -3,9 +3,9 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 
-	"my-service/internal/models"
-	"my-service/internal/middleware"
-	"my-service/pkg/db/postgres"
+	"feed-service/internal/models"
+	"feed-service/internal/middleware"
+	"feed-service/pkg/db/postgres"
 )
 
 func main() {

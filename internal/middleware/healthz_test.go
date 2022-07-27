@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/gin-gonic/gin"
 
-	"my-service/internal/models"
+	"feed-service/internal/models"
 )
 
 func TestGetHealthz(t *testing.T) {

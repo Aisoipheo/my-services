@@ -17,7 +17,7 @@ type PostgreSQLConfig struct {
 // connect to Postgres with creds from config, sslmode=disabled
 func NewPostgresDB(cfg *PostgreSQLConfig) (*sql.DB, error) {
 	connString := "postgres://" + cfg.User + ":" + cfg.Password +
-		"@" + cfg.Host + ":" + cfg.Port + "/" + cfg.DBName + "?sslmode=disabled&connect_timeout=2"
+		"@" + cfg.Host + ":" + cfg.Port + "/" + cfg.DBName + "?sslmode=disable&connect_timeout=2"
 
 	// returns (conn, nil) in most cases, even if conn is not valid
 	db, err := sql.Open("postgres", connString)

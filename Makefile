@@ -38,8 +38,8 @@ clean:
 	go clean --testcache
 	go mod tidy
 
-clear: clean
-	rm -vf ./bin/$(NAME)
+fclean: clean
+	rm -vf ./bin/$(NAME) go.mod go.sum
 
 $(NAME): build
 
