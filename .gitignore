@@ -1,4 +1,5 @@
 git-token
+build
 bin
 coverage.out
 *.sh
